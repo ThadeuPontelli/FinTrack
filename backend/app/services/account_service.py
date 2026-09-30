@@ -25,6 +25,11 @@ class AccountService:
             account,
         )
 
+        db.commit()
+        db.refresh(account)
+
+        return account
+
     @staticmethod
     def get_account(
         db: Session,

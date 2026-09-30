@@ -7,32 +7,31 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database.base import Base
 
 
-class Account(Base):
-    __tablename__ = "accounts"
+class Transaction(Base):
+    __tablename__ = "transactions"
 
     id: Mapped[int] = mapped_column(
         primary_key=True,
         index=True,
     )
 
-    name: Mapped[str] = mapped_column(
-        String(100),
+    description: Mapped[str] = mapped_column(
+        String(255),
         nullable=False,
     )
 
-    account_type: Mapped[str] = mapped_column(
-        String(50),
-        nullable=False,
-    )
-
-    balance: Mapped[Decimal] = mapped_column(
+    amount: Mapped[Decimal] = mapped_column(
         Numeric(12, 2),
-        default=0,
         nullable=False,
     )
 
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"),
+    transaction_type: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+    )
+
+    account_id: Mapped[int] = mapped_column(
+        ForeignKey("accounts.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -43,11 +42,6 @@ class Account(Base):
         nullable=False,
     )
 
-    user: Mapped["User"] = relationship(
-        back_populates="accounts",
-    )
-
-    transactions: Mapped[list["Transaction"]] = relationship(
-        back_populates="account",
-        cascade="all, delete-orphan",
+    account: Mapped["Account"] = relationship(
+        back_populates="transactions",
     )

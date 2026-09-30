@@ -12,7 +12,7 @@ class AccountRepository:
         account: Account,
     ) -> Account:
         db.add(account)
-        db.commit()
+        db.flush()
         db.refresh(account)
 
         return account
