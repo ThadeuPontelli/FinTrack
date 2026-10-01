@@ -1,5 +1,9 @@
+import logging
+
 from fastapi import Request
 from fastapi.responses import JSONResponse
+
+logger = logging.getLogger(__name__)
 
 
 class FinTrackException(Exception):
@@ -26,12 +30,19 @@ async def global_exception_handler(
     exc: Exception,
 ) -> JSONResponse:
     if isinstance(exc, FinTrackException):
+        logger.warning(
+            "Application exception: %s",
+            exc.detail,
+        )
+
         return JSONResponse(
             status_code=exc.status_code,
             content={
                 "detail": exc.detail,
             },
         )
+
+    logger.exception("Unhandled exception")
 
     return JSONResponse(
         status_code=500,

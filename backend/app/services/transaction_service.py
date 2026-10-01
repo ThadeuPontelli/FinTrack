@@ -1,3 +1,5 @@
+import logging
+
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import AccountNotFoundException
@@ -9,6 +11,7 @@ from app.schemas.transaction import (
     TransactionType,
 )
 
+logger = logging.getLogger(__name__)
 
 class TransactionService:
 
@@ -18,6 +21,13 @@ class TransactionService:
         transaction_data: TransactionCreate,
         account_id: int,
     ) -> Transaction:
+        logger.info(
+            "Creating transaction for account_id=%s, type=%s, amount=%s",
+            account_id,
+            transaction_data.transaction_type.value,
+            transaction_data.amount,
+        )
+
         try:
             transaction = Transaction(
                 description=transaction_data.description,
@@ -34,8 +44,12 @@ class TransactionService:
             account = db.get(Account, account_id)
     
             if account is None:
+                logger.warning(
+                    "Account not found while creating transaction: account_id=%s",
+                    account_id,
+                )
                 raise AccountNotFoundException()
-    
+
             if transaction_data.transaction_type == TransactionType.INCOME:
                 account.balance += transaction_data.amount
             else:
@@ -43,7 +57,13 @@ class TransactionService:
     
             db.commit()
             db.refresh(transaction)
-    
+
+            logger.info(
+                "Transaction created successfully: transaction_id=%s, account_id=%s",
+                transaction.id,
+                account_id,
+            )
+
             return transaction
     
         except Exception:
@@ -98,12 +118,24 @@ class TransactionService:
             else:
                 account.balance += transaction.amount
 
+            logger.info(
+                "Deleting transaction: transaction_id=%s, account_id=%s",
+                transaction_id,
+                account_id,
+            )
+
             TransactionRepository.delete(
                 db=db,
                 transaction=transaction,
             )
 
             db.commit()
+
+            logger.info(
+                "Transaction deleted successfully: transaction_id=%s, account_id=%s",
+                transaction_id,
+                account_id,
+            )
 
             return True
 
