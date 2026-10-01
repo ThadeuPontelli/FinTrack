@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from app.core.exceptions import AccountNotFoundException
 from app.models.account import Account
 from app.models.transaction import Transaction
 from app.repositories.transaction_repository import TransactionRepository
@@ -33,7 +34,7 @@ class TransactionService:
             account = db.get(Account, account_id)
     
             if account is None:
-                raise ValueError("Account not found")
+                raise AccountNotFoundException()
     
             if transaction_data.transaction_type == TransactionType.INCOME:
                 account.balance += transaction_data.amount

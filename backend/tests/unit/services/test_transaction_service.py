@@ -1,6 +1,9 @@
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
+import pytest
+
+from app.core.exceptions import AccountNotFoundException
 from app.models.account import Account
 from app.models.transaction import Transaction
 from app.schemas.transaction import TransactionCreate, TransactionType
@@ -209,17 +212,14 @@ def test_create_transaction_rolls_back_when_account_does_not_exist():
     with patch(
         "app.services.transaction_service.TransactionRepository.create"
     ):
-        try:
+        with pytest.raises(AccountNotFoundException) as exception:
             TransactionService.create_transaction(
                 db=db,
                 transaction_data=transaction_data,
                 account_id=999,
             )
-        except ValueError as error:
-            assert str(error) == "Account not found"
-        else:
-            raise AssertionError("Expected ValueError")
 
+    assert str(exception.value) == "Account not found"
     db.rollback.assert_called_once()
     db.commit.assert_not_called()
 
