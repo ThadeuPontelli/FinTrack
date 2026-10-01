@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from app.api.v1.router import router as api_v1_router
 from app.core.config import settings
+from app.core.exceptions import global_exception_handler
 
 
 app = FastAPI(
@@ -9,6 +10,11 @@ app = FastAPI(
     description="REST API for personal finance and transaction management.",
     version=settings.APP_VERSION,
     debug=settings.DEBUG,
+)
+
+app.add_exception_handler(
+    Exception,
+    global_exception_handler,
 )
 
 app.include_router(
