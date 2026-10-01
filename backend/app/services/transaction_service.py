@@ -77,30 +77,35 @@ class TransactionService:
         transaction_id: int,
         account_id: int,
     ) -> bool:
-        transaction = TransactionRepository.get_by_id(
-            db=db,
-            transaction_id=transaction_id,
-            account_id=account_id,
-        )
+        try:
+            transaction = TransactionRepository.get_by_id(
+                db=db,
+                transaction_id=transaction_id,
+                account_id=account_id,
+            )
 
-        if transaction is None:
-            return False
+            if transaction is None:
+                return False
 
-        account = db.get(Account, account_id)
+            account = db.get(Account, account_id)
 
-        if account is None:
-            return False
+            if account is None:
+                return False
 
-        if transaction.transaction_type == TransactionType.INCOME.value:
-            account.balance -= transaction.amount
-        else:
-            account.balance += transaction.amount
+            if transaction.transaction_type == TransactionType.INCOME.value:
+                account.balance -= transaction.amount
+            else:
+                account.balance += transaction.amount
 
-        TransactionRepository.delete(
-            db=db,
-            transaction=transaction,
-        )
+            TransactionRepository.delete(
+                db=db,
+                transaction=transaction,
+            )
 
-        db.commit()
+            db.commit()
 
-        return True
+            return True
+
+        except Exception:
+            db.rollback()
+            raise
