@@ -36,6 +36,12 @@ class Transaction(Base):
         index=True,
     )
 
+    category_id: Mapped[int | None] = mapped_column(
+        ForeignKey("categories.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -43,5 +49,9 @@ class Transaction(Base):
     )
 
     account: Mapped["Account"] = relationship(
+        back_populates="transactions",
+    )
+
+    category: Mapped["Category | None"] = relationship(
         back_populates="transactions",
     )

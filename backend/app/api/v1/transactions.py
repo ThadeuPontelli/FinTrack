@@ -42,6 +42,7 @@ def create_transaction(
         db=db,
         transaction_data=transaction_data,
         account_id=account_id,
+        user_id=current_user.id,
     )
 
 @router.get(

@@ -3,7 +3,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.core.exceptions import AccountNotFoundException
+from app.core.exceptions import (
+    AccountNotFoundException,
+    CategoryNotFoundException,
+)
 from app.models.account import Account
 from app.models.transaction import Transaction
 from app.schemas.transaction import TransactionCreate, TransactionType
@@ -36,6 +39,7 @@ def test_create_income_transaction_updates_account_balance():
             db=db,
             transaction_data=transaction_data,
             account_id=1,
+            user_id=1,
         )
 
     assert account.balance == Decimal("1500.00")
@@ -72,6 +76,7 @@ def test_create_expense_transaction_updates_account_balance():
             db=db,
             transaction_data=transaction_data,
             account_id=1,
+            user_id=1,
         )
 
     assert account.balance == Decimal("750.00")
@@ -217,6 +222,7 @@ def test_create_transaction_rolls_back_when_account_does_not_exist():
                 db=db,
                 transaction_data=transaction_data,
                 account_id=999,
+                user_id=1,
             )
 
     assert str(exception.value) == "Account not found"
@@ -243,6 +249,7 @@ def test_create_transaction_rolls_back_when_repository_fails():
                 db=db,
                 transaction_data=transaction_data,
                 account_id=1,
+                user_id=1,
             )
         except RuntimeError as error:
             assert error is repository_error
@@ -360,3 +367,31 @@ def test_delete_transaction_rolls_back_when_repository_delete_fails():
 
     db.rollback.assert_called_once()
     db.commit.assert_not_called()
+
+
+def test_create_transaction_rejects_category_from_another_user():
+    db = MagicMock()
+
+    transaction_data = TransactionCreate(
+        description="Supermercado",
+        amount=Decimal("250.00"),
+        transaction_type=TransactionType.EXPENSE,
+        category_id=10,
+    )
+
+    with patch(
+        "app.services.transaction_service.CategoryRepository.exists_for_user",
+        return_value=False,
+    ), patch(
+        "app.services.transaction_service.TransactionRepository.create"
+    ) as repository_create:
+        with pytest.raises(CategoryNotFoundException) as exception:
+            TransactionService.create_transaction(
+                db=db,
+                transaction_data=transaction_data,
+                account_id=1,
+                user_id=1,
+            )
+
+    assert str(exception.value) == "Category not found"
+    repository_create.assert_not_called()

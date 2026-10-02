@@ -2,9 +2,13 @@ import logging
 
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import AccountNotFoundException
+from app.core.exceptions import (
+    AccountNotFoundException,
+    CategoryNotFoundException,
+)
 from app.models.account import Account
 from app.models.transaction import Transaction
+from app.repositories.category_repository import CategoryRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.transaction import (
     TransactionCreate,
@@ -20,6 +24,7 @@ class TransactionService:
         db: Session,
         transaction_data: TransactionCreate,
         account_id: int,
+        user_id: int,
     ) -> Transaction:
         logger.info(
             "Creating transaction for account_id=%s, type=%s, amount=%s",
@@ -29,11 +34,26 @@ class TransactionService:
         )
 
         try:
+            if transaction_data.category_id is not None:
+                category_exists = CategoryRepository.exists_for_user(
+                    db=db,
+                    category_id=transaction_data.category_id,
+                    user_id=user_id,
+                )
+                if not category_exists:
+                    logger.warning(
+                        "Category not found for user: category_id=%s, user_id=%s",
+                        transaction_data.category_id,
+                        user_id,
+                    )
+                    raise CategoryNotFoundException()
+
             transaction = Transaction(
                 description=transaction_data.description,
                 amount=transaction_data.amount,
                 transaction_type=transaction_data.transaction_type.value,
                 account_id=account_id,
+                category_id=transaction_data.category_id,
             )
     
             TransactionRepository.create(

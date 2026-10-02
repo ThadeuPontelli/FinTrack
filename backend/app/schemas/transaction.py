@@ -21,6 +21,8 @@ class TransactionCreate(BaseModel):
 
     transaction_type: TransactionType
 
+    category_id: int | None = None
+
 
 class TransactionResponse(BaseModel):
     id: int
@@ -32,3 +34,5 @@ class TransactionResponse(BaseModel):
     model_config = ConfigDict(
         from_attributes=True,
     )
+
+    category_id: int | None

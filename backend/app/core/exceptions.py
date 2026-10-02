@@ -24,6 +24,13 @@ class AccountNotFoundException(FinTrackException):
     def __init__(self):
         super().__init__("Account not found")
 
+class CategoryNotFoundException(FinTrackException):
+    """Raised when a category cannot be found."""
+
+    status_code = 404
+
+    def __init__(self):
+        super().__init__("Category not found")
 
 async def global_exception_handler(
     request: Request,
